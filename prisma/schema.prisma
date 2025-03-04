@@ -1,0 +1,76 @@
+// schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" // You can change this to your database provider
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  email     String    @unique
+  name      String
+  password  String
+  role      String @default("USER")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  posts     Post[]
+  comments  Comment[]
+  reactions Reaction[]
+}
+
+model Post {
+  id        Int       @id @default(autoincrement())
+  title     String
+  content   String
+  authorId  Int
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  author    User      @relation(fields: [authorId], references: [id])
+  comments  Comment[]
+  reactions Reaction[]
+}
+
+model Comment {
+  id        Int       @id @default(autoincrement())
+  content   String
+  postId    Int
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  post      Post      @relation(fields: [postId], references: [id])
+  userId    Int
+  user      User      @relation(fields: [userId], references: [id])
+}
+
+model Reaction {
+  id        Int         @id @default(autoincrement())
+  userId    Int
+  postId    Int
+  type      ReactionType
+  user      User        @relation(fields: [userId], references: [id])
+  post      Post        @relation(fields: [postId], references: [id])
+
+  @@unique([userId, postId]) // Composite primary key
+}
+
+enum ReactionType {
+  LIKE 
+  LOVE
+  WOW
+  SAD
+  ANGRY
+  HAHA
+  THUMBS_UP
+  THUMBS_DOWN
+  CLAPPING
+  PRAYING
+  HEART
+  FIRE
+  STAR
+  PARTY
+  SMILE
+  YEMEN_FLAG
+}
