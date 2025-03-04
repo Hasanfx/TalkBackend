@@ -63,7 +63,7 @@ export const getPostComments = async (
             connect: { id: post.id },
           },
           user: {
-            connect: { id: req.user.id },
+            connect: { id: (req as any).user.id },
           },
         },
         include: {

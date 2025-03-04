@@ -27,7 +27,7 @@ export const createOrUpdateReaction = async (
       // Check if the user has already reacted to this post
       const existingReaction = await prismaClient.reaction.findFirst({
         where: {
-          userId: req.user.id,
+          userId: (req as any).user.id,
           postId: post.id,
         },
       });
@@ -54,7 +54,7 @@ export const createOrUpdateReaction = async (
           data: {
             type,
             user: {
-              connect: { id: req.user.id },
+              connect: { id: (req as any).user.id },
             },
             post: {
               connect: { id: post.id },
@@ -92,7 +92,7 @@ export const createOrUpdateReaction = async (
       
       const reaction = await prismaClient.reaction.findFirst({
         where: {
-          userId: req.user.id,
+          userId: (req as any).user.id,
           postId: post.id,
         },
       });

@@ -6,17 +6,17 @@ import {
   deleteReaction,
 } from "../controllers/reactionController"; // Updated controller names
 
-const postRoutes = Router({ mergeParams: true }); // Renamed for consistency
+const reactionRoutes = Router({ mergeParams: true }); // Renamed for consistency
 
 
-postRoutes.post(
+reactionRoutes.post(
   "/:postId/reactions", // Reacting to a post
   [AuthMiddleware],
   ErrorHandler(createOrUpdateReaction)
 );
 
 // Route to remove a reaction from a post
-postRoutes.delete(
+reactionRoutes.delete(
   "/:postId/reactions", // Removing reaction from a post
   [AuthMiddleware],
   ErrorHandler(deleteReaction)

@@ -7,12 +7,12 @@ export const PostOwner = async (
   res: Response,
   next: NextFunction
 ) => {
-  if (req.user.role === "ADMIN") return next();
+  if ((req  as any).user.role === "ADMIN") return next();
   try {
     const PostOwner = await prismaClient.post.findFirstOrThrow({
       where: { authorId: +req.params.userId },
     });
-    if (PostOwner.authorId === Number(req.user.id)) return next();
+    if (PostOwner.authorId === Number((req as any).user.id)) return next();
 
     return next(new HttpException(ErrorCode.UNAUTHORIZED_ACCESS_401, 401));
   } catch (err) {
