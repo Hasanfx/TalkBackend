@@ -1,5 +1,5 @@
 import express, { Express } from "express";
-import { PrismaClient } from "@prisma/Client";
+import { PrismaClient } from "@prisma/client";
 import rootRouter from "./src/routes/root";
 import { errorMiddleware } from "./src/middlewares/error";
 import cors from "cors";
