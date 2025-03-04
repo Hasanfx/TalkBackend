@@ -62,10 +62,10 @@ export const updatePost = async (
 
   try {
     const message = await prismaClient.post.findFirst({
-      where: { id: +req.params.messageId },
+      where: { id: Number(req.params.id) },
     });
+    console.log(req.params.id)
     if (!message) return next(new HttpException(ErrorCode.NOT_FOUND_404, 404));
-
     // // Check if the user is the author of the post
     // if (message.authorId !== req.user.id) {
     //   return next(new HttpException(ErrorCode.UNAUTHORIZED_401, 401));
@@ -91,7 +91,7 @@ export const deletePost = async (
 ) => {
   try {
     const message = await prismaClient.post.findFirst({
-      where: { id: +req.params.messageId },
+      where: { id: Number(req.params.id) },
     });
     
     if (!message) return next(new HttpException(ErrorCode.NOT_FOUND_404, 404));
@@ -107,5 +107,43 @@ export const deletePost = async (
     res.json(deletedMessage);
   } catch (err) {
     return next(new HttpException(ErrorCode.NOT_FOUND_404, 404));
+  }
+};
+export const getAllPosts = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const posts = await prismaClient.post.findMany({
+      include: {
+        author: {
+          select: {
+            id: true,
+            name: true, // Assuming your user model has a 'name' field
+          },
+        },
+        reactions: {
+          select: {
+            type: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc", // Sorting posts from newest to oldest
+      },
+    });
+
+    // Map posts to include reaction count
+    const formattedPosts = posts.map((post) => ({
+      ...post,
+      reactionCount: post.reactions.length,
+    }));
+
+    res.json(formattedPosts);
+  } catch (err: any) {
+    return next(
+      new HttpException(ErrorCode.GENERAL_EXCEPTION_100, 100, err.message)
+    );
   }
 };

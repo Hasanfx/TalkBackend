@@ -7,20 +7,20 @@ import {
 } from "../controllers/commentController"; // Updated controller names
 import { commentOwner } from "../middlewares/ownerComment"; // Updated middleware name
 
-const postRoutes = Router({ mergeParams: true });
+const commentRoutes = Router({ mergeParams: true });
 
-postRoutes.get(
-  "/:postId/comments", 
-  [AuthMiddleware],
+commentRoutes.get(
+  "/:postId", 
+  [AuthMiddleware , ],
   ErrorHandler(getPostComments)
 );
 
 
-postRoutes.post(
-  "/:postId/comments", 
+commentRoutes.post(
+  "/:postId", 
   [AuthMiddleware],
   ErrorHandler(createComment)
 );
 
 
-export default postRoutes; // Renamed to postRoutes for consistency
+export default commentRoutes; // Renamed to commentRoutes for consistency

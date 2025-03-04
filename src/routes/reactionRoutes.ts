@@ -4,22 +4,27 @@ import { ErrorHandler } from "../schema/errorHandler";
 import {
   createOrUpdateReaction,
   deleteReaction,
+  getReactions
 } from "../controllers/reactionController"; // Updated controller names
 
 const reactionRoutes = Router({ mergeParams: true }); // Renamed for consistency
 
 
 reactionRoutes.post(
-  "/:postId/reactions", // Reacting to a post
+  "/:postId", // Reacting to a post
   [AuthMiddleware],
   ErrorHandler(createOrUpdateReaction)
 );
 
 // Route to remove a reaction from a post
 reactionRoutes.delete(
-  "/:postId/reactions", // Removing reaction from a post
+  "/:postId", // Removing reaction from a post
   [AuthMiddleware],
   ErrorHandler(deleteReaction)
+);
+reactionRoutes.get(
+  "/:postId", // Getting reactions for a post
+  ErrorHandler(getReactions)
 );
 
 export default reactionRoutes; // Renamed to postRoutes for consistency

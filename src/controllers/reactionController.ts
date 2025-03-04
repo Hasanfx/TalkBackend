@@ -12,9 +12,10 @@ export const createOrUpdateReaction = async (
     try {
       const { type } = req.body;
       
-      if (!type) {
-        return next(new HttpException(ErrorCode.INVALID_DATA_400, 400, "Reaction type is required"));
+      if (typeof type !== "string" || !type.trim()) {
+        return next(new HttpException(ErrorCode.INVALID_DATA_400, 400, "Invalid reaction type"));
       }
+      
       
       const post = await prismaClient.post.findFirst({
         where: { id: +req.params.postId },
@@ -108,6 +109,39 @@ export const createOrUpdateReaction = async (
       });
       
       res.json(deletedReaction);
+    } catch (err: any) {
+      return next(
+        new HttpException(ErrorCode.GENERAL_EXCEPTION_100, 100, err.message)
+      );
+    }
+  };
+  export const getReactions = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const post = await prismaClient.post.findFirst({
+        where: { id: +req.params.postId },
+      });
+  
+      if (!post) {
+        return next(new HttpException(ErrorCode.NOT_FOUND_404, 404, "Post not found"));
+      }
+  
+      const reactions = await prismaClient.reaction.findMany({
+        where: { postId: post.id },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true, // Assuming your user model has a name field
+            },
+          },
+        },
+      });
+  
+      res.json(reactions);
     } catch (err: any) {
       return next(
         new HttpException(ErrorCode.GENERAL_EXCEPTION_100, 100, err.message)

@@ -40,37 +40,20 @@ model Comment {
   postId    Int
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
-  post      Post      @relation(fields: [postId], references: [id])
+  post      Post      @relation(fields: [postId], references: [id],onDelete: Cascade)
   userId    Int
-  user      User      @relation(fields: [userId], references: [id])
+  user      User      @relation(fields: [userId], references: [id],onDelete: Cascade )
 }
 
 model Reaction {
   id        Int         @id @default(autoincrement())
   userId    Int
   postId    Int
-  type      ReactionType
-  user      User        @relation(fields: [userId], references: [id])
-  post      Post        @relation(fields: [postId], references: [id])
+  type      String
+  user      User        @relation(fields: [userId], references: [id],onDelete: Cascade  ) 
+  post      Post        @relation(fields: [postId], references: [id],onDelete: Cascade) 
 
   @@unique([userId, postId]) // Composite primary key
 }
 
-enum ReactionType {
-  LIKE 
-  LOVE
-  WOW
-  SAD
-  ANGRY
-  HAHA
-  THUMBS_UP
-  THUMBS_DOWN
-  CLAPPING
-  PRAYING
-  HEART
-  FIRE
-  STAR
-  PARTY
-  SMILE
-  YEMEN_FLAG
-}
+

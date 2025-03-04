@@ -7,15 +7,28 @@ export const PostOwner = async (
   res: Response,
   next: NextFunction
 ) => {
-  if ((req  as any).user.role === "ADMIN") return next();
+  // Allow admins to access without post ownership check
+  if ((req as any).user.role === "ADMIN") return next();
+  
   try {
-    const PostOwner = await prismaClient.post.findFirstOrThrow({
-      where: { authorId: +req.params.userId },
+    // Get post by ID and check if the current user is the author
+    const post = await prismaClient.post.findUnique({
+      where: { id: +req.params.id }, // Use post ID, not userId
     });
-    if (PostOwner.authorId === Number((req as any).user.id)) return next();
 
-    return next(new HttpException(ErrorCode.UNAUTHORIZED_ACCESS_401, 401));
+    if (!post) {
+      return next(new HttpException(ErrorCode.NOT_FOUND_404, 404, "Post not found"));
+    }
+
+    console.log("Post Owner ID:", post.authorId, "Current User ID:", (req as any).user.id);
+
+    // Check if the current user is the post author
+    if (post.authorId === (req as any).user.id) {
+      return next();
+    }
+
+    return next(new HttpException(ErrorCode.UNAUTHORIZED_ACCESS_401, 401, "You are not the author of this post"));
   } catch (err) {
-    return next(new HttpException(ErrorCode.NOT_FOUND_404, 404));
+    return next(new HttpException(ErrorCode.NOT_FOUND_404, 404, "Post not found"));
   }
 };

@@ -5,30 +5,36 @@ import {
   createPost,
   deletePost,
   updatePost,
+  getAllPosts
 } from "../controllers/PostController"; // Updated controller names
 import { PostOwner } from "../middlewares/ownerPost"; // Updated middleware name
 
 const postRoutes = Router({ mergeParams: true }); // Renamed for consistency
 
 
+postRoutes.get(
+  "/", 
+  ErrorHandler(getAllPosts)
+);
 
 // Route to create a new post
 postRoutes.post(
   "/add", 
-  [AuthMiddleware , PostOwner],
+  [AuthMiddleware],
   ErrorHandler(createPost)
 );
 
+
 // Route to update a post
 postRoutes.put(
-  "/:postId", 
+  "/:id", 
   [AuthMiddleware, PostOwner], 
   ErrorHandler(updatePost)
 );
 
 // Route to delete a post
 postRoutes.delete(
-  "/:postId",
+  "/:id",
   [AuthMiddleware, PostOwner], 
   ErrorHandler(deletePost)
 );
