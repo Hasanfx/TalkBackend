@@ -2,7 +2,7 @@ import express, { Request, Response, NextFunction } from "express";
 import { prismaClient } from "../../server";
 import { ZodError } from "zod";
 import { ErrorCode, HttpException } from "../exception/root";
-import { PostSchema } from "../schema/message";
+import { PostSchema } from "../schema/post";
 
 export const createPost = async (
   req: Request,

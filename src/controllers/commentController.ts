@@ -1,8 +1,8 @@
 import express, { Request, Response, NextFunction } from "express";
 import { prismaClient } from "../../server";
-import { ZodError } from "zod";
 import { ErrorCode, HttpException } from "../exception/root";
-import { PostSchema } from "../schema/message";
+import { ZodError } from "zod";
+import { CommentSchema } from "../schema/comment";
 
 
 
@@ -11,6 +11,7 @@ export const getPostComments = async (
     res: Response,
     next: NextFunction
   ) => {
+
     try {
       const messages = await prismaClient.post.findMany({
         where: {
@@ -41,6 +42,17 @@ export const getPostComments = async (
     res: Response,
     next: NextFunction
   ) => {
+    try {
+      CommentSchema.parse(req.body);
+    } catch (err: any) {
+      if (err instanceof ZodError)
+        return next(
+          new HttpException(ErrorCode.INVALID_DATA_400, 400, err.errors)
+        );
+      return next(
+        new HttpException(ErrorCode.GENERAL_EXCEPTION_100, 100, err.message)
+      );
+    }
     try {
       const { content } = req.body;
       

@@ -38,7 +38,6 @@ export const UpdateUser = async (
     });
     if (!user) return next(new HttpException(ErrorCode.NOT_FOUND_404, 404));
     
-    // Validate the updated user data against the UserSchema
     UserSchema.parse(req.body);
 
     if(req.body.role)

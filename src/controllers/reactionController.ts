@@ -3,7 +3,6 @@ import { prismaClient } from "../../server";
 import { ZodError } from "zod";
 import { ErrorCode, HttpException } from "../exception/root";
 
-// New function to add a reaction to a post
 export const createOrUpdateReaction = async (
     req: Request,
     res: Response,
@@ -76,7 +75,6 @@ export const createOrUpdateReaction = async (
     }
   };
   
-  // New function to remove a reaction from a post
   export const deleteReaction = async (
     req: Request,
     res: Response,
@@ -135,7 +133,7 @@ export const createOrUpdateReaction = async (
           user: {
             select: {
               id: true,
-              name: true, // Assuming your user model has a name field
+              name: true, 
             },
           },
         },
