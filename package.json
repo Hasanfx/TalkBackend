@@ -4,7 +4,7 @@
   "description": "it's a server fo a communication app",
   "main": "server.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest",
     "start": "node ./dist/server.js",
     "build": "tsc",
     "dev": "nodemon --ext ts --exec ts-node ./server.ts"
