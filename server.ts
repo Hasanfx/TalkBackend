@@ -7,9 +7,11 @@ import cookieParser from "cookie-parser";
 import requestLogger from "./src/middlewares/requestLogger";
 import morgan from "morgan";
 import path from "path";
+import dotenv from "dotenv";
 
 // import rootRouter from "./src/routes";
 // import { errorMiddleware } from "./src/middlewares/errors";
+dotenv.config();
 
 const app: Express = express();
 const port = process.env.PORT || 4000;
@@ -18,7 +20,7 @@ app.use(express.json());
 app.use(cors({ origin: process.env.FRONTEND_PATH, credentials: true }));
 app.use(cookieParser());
 
-app.use(morgan("dev")); 
+app.use(morgan("dev"));
 app.use(requestLogger);
 
 app.use("/api", rootRouter);
