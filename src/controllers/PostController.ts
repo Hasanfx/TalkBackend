@@ -3,42 +3,63 @@ import { prismaClient } from "../../server";
 import { ZodError } from "zod";
 import { ErrorCode, HttpException } from "../exception/root";
 import { PostSchema } from "../schema/post";
+import multer from "multer";
+import path from "path";
+import fs from "fs/promises";
+import { existsSync } from "fs";
 
-export const createPost = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    PostSchema.parse(req.body);
-  } catch (err: any) {
-    if (err instanceof ZodError)
-      return next(
-        new HttpException(ErrorCode.INVALID_DATA_400, 400, err.errors)
-      );
-    return next(
-      new HttpException(ErrorCode.GENERAL_EXCEPTION_100, 100, err.message)
-    );
-  }
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 
+export const createPost = async (req: any, res: Response, next: NextFunction) => {
   try {
-    const newMessage = await prismaClient.post.create({
-      data: {
-        title: req.body.title || "New Post",
-        content: req.body.content,
-        author: {
-          connect: { id: Number((req as any).user.id) },
-        },
-      },
-      include: {
-        author: true,
-      },
+    upload.single("file")(req, res, async (err: any) => {
+      if (err) return next(err);
+
+      try {
+        PostSchema.parse(req.body);
+      } catch (err: any) {
+        if (err instanceof ZodError) {
+          return next(new HttpException(ErrorCode.INVALID_DATA_400, 400, err.errors));
+        }
+        return next(new HttpException(ErrorCode.GENERAL_EXCEPTION_100, 100, err.message));
+      }
+
+      try {
+        let postImg = undefined; // Will be undefined if no image is uploaded
+
+        if (req.file) {
+          const uploadDir = path.join(process.cwd(), "uploads/posts");
+          if (!existsSync(uploadDir)) await fs.mkdir(uploadDir, { recursive: true });
+
+          const fileType = req.file.originalname.split(".").pop();
+          const fileName = `post-${Date.now()}.${fileType}`;
+          postImg = `/uploads/posts/${fileName}`;
+
+          await fs.writeFile(path.join(uploadDir, fileName), req.file.buffer);
+        }
+
+        const newPost = await prismaClient.post.create({
+          data: {
+            title: req.body.title || "New Post",
+            content: req.body.content,
+            postImg, // If undefined, Prisma will use the default value
+            author: {
+              connect: { id: Number(req.user.id) },
+            },
+          },
+          include: {
+            author: true,
+          },
+        });
+
+        res.json(newPost);
+      } catch (err: any) {
+        return next(new HttpException(ErrorCode.GENERAL_EXCEPTION_100, 100, err.message));
+      }
     });
-    res.json(newMessage);
   } catch (err: any) {
-    return next(
-      new HttpException(ErrorCode.GENERAL_EXCEPTION_100, 100, err.message)
-    );
+    return next(new HttpException(ErrorCode.GENERAL_EXCEPTION_100, 100, err.message));
   }
 };
 
@@ -147,3 +168,59 @@ export const getAllPosts = async (
     );
   }
 };
+
+export const getPostById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const post = await prismaClient.post.findUnique({
+      where: { id: Number(req.params.id) },
+      include: {
+        author: {
+          select: {
+            id: true,
+            name: true, // Assuming your user model has a 'name' field
+            profileImg: true, // Include profileImg if necessary
+          },
+        },
+        reactions: {
+          select: {
+            type: true,
+            userId: true, // Include userId for reactions if needed
+          },
+        },
+        comments: {
+          select: {
+            id: true,
+            content: true,
+            createdAt: true,
+            updatedAt: true,
+            userId: true,
+            user: {
+              select: {
+                id: true,
+                name: true, // Get user details for the comment author
+                profileImg: true, // Include profileImg for the comment author
+              },
+            },
+          },
+          orderBy: { createdAt: "asc" }, // Sorting comments from oldest to newest
+        },
+      },
+    });
+
+    if (!post)
+      return next(new HttpException(ErrorCode.NOT_FOUND_404, 404, "Post not found"));
+
+    res.json({
+      ...post,
+      reactionCount: post.reactions.length, // Add reaction count
+      commentCount: post.comments.length,  // Add comment count
+    });
+  } catch (err: any) {
+    return next(new HttpException(ErrorCode.GENERAL_EXCEPTION_100, 100, err.message));
+  }
+};
+

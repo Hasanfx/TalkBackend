@@ -5,7 +5,8 @@ import {
   createPost,
   deletePost,
   updatePost,
-  getAllPosts
+  getAllPosts,
+  getPostById
 } from "../controllers/PostController"; // Updated controller names
 import { PostOwner } from "../middlewares/ownerPost"; // Updated middleware name
 
@@ -17,6 +18,12 @@ postRoutes.get(
   ErrorHandler(getAllPosts)
 );
 
+
+
+postRoutes.get(
+  "/:id", 
+  ErrorHandler(getAllPosts),getPostById
+);
 // Route to create a new post
 postRoutes.post(
   "/add", 

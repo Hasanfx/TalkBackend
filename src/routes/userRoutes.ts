@@ -7,6 +7,8 @@ import {
 } from "../controllers/UserController";
 import { AuthMiddleware } from "../middlewares/auth";
 import { ErrorHandler } from "../schema/errorHandler";
+import { uploadImg } from "../controllers/ImgController";
+import { getUserImg } from "../services/getImgs";
 
 const userRoutes = Router();
 
@@ -25,6 +27,17 @@ userRoutes.put(
   "/:userId",
   [AuthMiddleware],
   ErrorHandler(UpdateUser)
+);
+userRoutes.get(
+  "/img/:userId",
+  [AuthMiddleware],
+  ErrorHandler(getUserImg)
+);
+
+userRoutes.put(
+  "/img/:userId",
+  [AuthMiddleware],
+  ErrorHandler(uploadImg)
 );
 
 export default userRoutes;

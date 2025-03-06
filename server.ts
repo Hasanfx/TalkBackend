@@ -6,6 +6,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import requestLogger from "./src/middlewares/requestLogger";
 import morgan from "morgan";
+import path from "path";
 
 // import rootRouter from "./src/routes";
 // import { errorMiddleware } from "./src/middlewares/errors";
@@ -21,6 +22,7 @@ app.use(morgan("dev"));
 app.use(requestLogger);
 
 app.use("/api", rootRouter);
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 export const prismaClient = new PrismaClient({
   log: ["query"],

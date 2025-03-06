@@ -21,6 +21,7 @@ export enum ErrorCode {
   FAILED_REFRESH_TOKEN_403 = 4033,
   NOT_FOUND_404 = 4004,
   UNAUTHORIZED_401,
+  SERVER_ERROR_500,
 }
 
 export enum ErrorMessage {

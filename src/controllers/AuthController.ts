@@ -23,7 +23,7 @@ export const register = async (
     }
   }
 
-  const { name, email, password } = req.body;
+  const { name, email,password } = req.body;
   console.log("Registering user with email:", email);
 
   const user = await prismaClient.user.findFirst({ where: { email } });
