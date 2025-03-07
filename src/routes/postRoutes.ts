@@ -7,11 +7,11 @@ import {
   updatePost,
   getAllPosts,
   getPostById
-} from "../controllers/PostController"; // Updated controller names
-import { PostOwner } from "../middlewares/ownerPost"; // Updated middleware name
+} from "../controllers/PostController"; 
+import { PostOwner } from "../middlewares/ownerPost"; 
+import {FileMiddleware } from "../middlewares/mutler.config";
 
 const postRoutes = Router({ mergeParams: true }); // Renamed for consistency
-
 
 postRoutes.get(
   "/", 
@@ -20,14 +20,16 @@ postRoutes.get(
 
 
 
+
+
 postRoutes.get(
   "/:id", 
-  ErrorHandler(getAllPosts),getPostById
+  ErrorHandler(getPostById),getPostById
 );
 // Route to create a new post
 postRoutes.post(
   "/add", 
-  [AuthMiddleware],
+  [AuthMiddleware],FileMiddleware,
   ErrorHandler(createPost)
 );
 
@@ -35,7 +37,7 @@ postRoutes.post(
 // Route to update a post
 postRoutes.put(
   "/:id", 
-  [AuthMiddleware, PostOwner], 
+  [AuthMiddleware, PostOwner],FileMiddleware,
   ErrorHandler(updatePost)
 );
 

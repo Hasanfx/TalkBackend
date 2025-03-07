@@ -1,49 +1,33 @@
-import express, { Request, Response, NextFunction } from "express";
-import { prismaClient } from "../../server";
+import path from "path";
 import fs from "fs/promises";
 import { existsSync } from "fs";
-import path from "path";
 import multer from "multer";
 
-const storage = multer.memoryStorage(); // Store in memory for processing
-const upload = multer({ storage });
+const upload = multer({ storage: multer.memoryStorage() });
 
-export const uploadProfileImg = async (req: any, res: Response, next: NextFunction) => {
-  try {
-    upload.single("file")(req, res, async (err: any) => {
-      if (err) return next(err);
+export const handleImageUpload = async (req: any, folder: string): Promise<string> => {
+  const uploadDir = path.join(process.cwd(), `uploads/${folder}`);
 
-      if (!req.file) {
-        return res.status(400).json({ error: "No file uploaded!" });
-      }
-
-      const userId = req.body.userId;
-      if (!userId) {
-        return res.status(400).json({ error: "User ID is required!" });
-      }
-
-      const user = await prismaClient.user.findUnique({ where: { id: userId } });
-      if (!user) {
-        return res.status(404).json({ error: "User not found!" });
-      }
-
-      const uploadDir = path.join(process.cwd(), "uploads");
-      if (!existsSync(uploadDir)) await fs.mkdir(uploadDir, { recursive: true });
-
-      const fileType = req.file.originalname.split(".").pop();
-      const fileName = `user-${userId}.${fileType}`;
-      const filePath = `/uploads/${fileName}`;
-
-      await fs.writeFile(path.join(uploadDir, fileName), req.file.buffer);
-
-      await prismaClient.user.update({
-        where: { id: userId },
-        data: { profileImg: filePath },
-      });
-
-      res.json({ message: "Profile image uploaded successfully!", profileImg: filePath });
-    });
-  } catch (err: any) {
-    next(err);
+  // Create directory if it doesn't exist
+  if (!existsSync(uploadDir)) {
+    await fs.mkdir(uploadDir, { recursive: true });
   }
+
+  // Use placeholder if no file uploaded
+  if (!req.file) {
+    return `/uploads/${folder}/placeHolder.webp`;
+  }
+
+  // Generate unique filename
+  const fileType = req.file.originalname.split('.').pop();
+  const fileName = `${folder}-${Date.now()}.${fileType}`;
+  const filePath = `/uploads/${folder}/${fileName}`;
+
+  // Save file to disk
+  await fs.writeFile(
+    path.join(uploadDir, fileName),
+    req.file.buffer
+  );
+
+  return filePath;
 };

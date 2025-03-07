@@ -7,101 +7,71 @@ import multer from "multer";
 import path from "path";
 import fs from "fs/promises";
 import { existsSync } from "fs";
+import { handleImageUpload } from "../services/uploadImg";
 
 const storage = multer.memoryStorage();
-const upload = multer({ storage });
+const upload =multer({storage})
 
 export const createPost = async (req: any, res: Response, next: NextFunction) => {
   try {
-    upload.single("file")(req, res, async (err: any) => {
-      if (err) return next(err);
+    const filePath = await handleImageUpload(req, "posts");
 
-      try {
-        PostSchema.parse(req.body);
-      } catch (err: any) {
-        if (err instanceof ZodError) {
-          return next(new HttpException(ErrorCode.INVALID_DATA_400, 400, err.errors));
-        }
-        return next(new HttpException(ErrorCode.GENERAL_EXCEPTION_100, 100, err.message));
+    try {
+      PostSchema.parse(req.body);
+    } catch (err: any) {
+      if (err instanceof ZodError) {
+        return next(new HttpException(ErrorCode.INVALID_DATA_400, 400, err.errors));
       }
+      return next(new HttpException(ErrorCode.GENERAL_EXCEPTION_500, 100, err.message));
+    }
 
-      try {
-        let postImg = undefined; // Will be undefined if no image is uploaded
-
-        if (req.file) {
-          const uploadDir = path.join(process.cwd(), "uploads/posts");
-          if (!existsSync(uploadDir)) await fs.mkdir(uploadDir, { recursive: true });
-
-          const fileType = req.file.originalname.split(".").pop();
-          const fileName = `post-${Date.now()}.${fileType}`;
-          postImg = `/uploads/posts/${fileName}`;
-
-          await fs.writeFile(path.join(uploadDir, fileName), req.file.buffer);
-        }
-
-        const newPost = await prismaClient.post.create({
-          data: {
-            title: req.body.title || "New Post",
-            content: req.body.content,
-            postImg, // If undefined, Prisma will use the default value
-            author: {
-              connect: { id: Number(req.user.id) },
-            },
-          },
-          include: {
-            author: true,
-          },
-        });
-
-        res.json(newPost);
-      } catch (err: any) {
-        return next(new HttpException(ErrorCode.GENERAL_EXCEPTION_100, 100, err.message));
+    const newPost = await prismaClient.post.create({
+      data: {
+        content: req.body.content,
+        postImg: filePath,
+        author: { connect: { id: Number(req.user.id) } },
       }
     });
+
+    res.json(newPost);
   } catch (err: any) {
-    return next(new HttpException(ErrorCode.GENERAL_EXCEPTION_100, 100, err.message));
+    console.error("Error occurred:", err);
+    return next(new HttpException(ErrorCode.GENERAL_EXCEPTION_500, 100, err.message));
   }
 };
 
-export const updatePost = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
 
+
+export const updatePost = async (req: any, res: Response, next: NextFunction) => {
   try {
     PostSchema.parse(req.body);
   } catch (err: any) {
-    if (err instanceof ZodError)
-      return next(
-        new HttpException(ErrorCode.INVALID_DATA_400, 400, err.errors)
-      );
-    return next(
-      new HttpException(ErrorCode.GENERAL_EXCEPTION_100, 100, err.message)
-    );
+    if (err instanceof ZodError) {
+      return next(new HttpException(ErrorCode.INVALID_DATA_400, 400, err.errors));
+    }
+    return next(new HttpException(ErrorCode.GENERAL_EXCEPTION_500, 100, err.message));
   }
 
   try {
-    const message = await prismaClient.post.findFirst({
+    const post = await prismaClient.post.findFirst({
       where: { id: Number(req.params.id) },
     });
-    console.log(req.params.id)
-    if (!message) return next(new HttpException(ErrorCode.NOT_FOUND_404, 404));
-    // // Check if the user is the author of the post
-    // if (message.authorId !== req.user.id) {
-    //   return next(new HttpException(ErrorCode.UNAUTHORIZED_401, 401));
-    // }
 
-    const updatedMessage = await prismaClient.post.update({
-      where: { id: message.id },
-      data: req.body,
+    if (!post) return next(new HttpException(ErrorCode.NOT_FOUND_404, 404));
+
+    const filePath = req.file ? await handleImageUpload(req, "posts") : post.postImg;
+
+    const updatedPost = await prismaClient.post.update({
+      where: { id: post.id },
+      data: {
+        content: req.body.content,
+        postImg: filePath,
+      },
     });
 
-    res.json(updatedMessage);
+    res.json(updatedPost);
   } catch (err: any) {
-    return next(
-      new HttpException(ErrorCode.GENERAL_EXCEPTION_100, 404, err.message)
-    );
+    return next(new HttpException(ErrorCode.GENERAL_EXCEPTION_500, 404, err.message));
   }
 };
 
@@ -116,11 +86,7 @@ export const deletePost = async (
     });
     
     if (!message) return next(new HttpException(ErrorCode.NOT_FOUND_404, 404));
-    
-    // // Check if the user is the author of the post
-    // if (message.authorId !== req.user.id) {
-    //   return next(new HttpException(ErrorCode.UNAUTHORIZED_401, 401));
-    // }
+  
     
     const deletedMessage = await prismaClient.post.delete({
       where: { id: message.id },
@@ -140,14 +106,31 @@ export const getAllPosts = async (
       include: {
         author: {
           select: {
-            id: true,
             name: true, // Assuming your user model has a 'name' field
+            profileImg: true, // Include profileImg if necessary
           },
         },
         reactions: {
           select: {
             type: true,
+            userId: true, // Include userId for reactions if needed
           },
+        },
+        comments: {
+          select: {
+            id: true,
+            content: true,
+            createdAt: true,
+            updatedAt: true,
+            userId: true,
+            user: {
+              select: {
+                name: true, // Get user details for the comment author
+                profileImg: true, // Include profileImg for the comment author
+              },
+            },
+          },
+          orderBy: { createdAt: "asc" }, // Sorting comments from oldest to newest
         },
       },
       orderBy: {
@@ -164,7 +147,7 @@ export const getAllPosts = async (
     res.json(formattedPosts);
   } catch (err: any) {
     return next(
-      new HttpException(ErrorCode.GENERAL_EXCEPTION_100, 100, err.message)
+      new HttpException(ErrorCode.GENERAL_EXCEPTION_500, 100, err.message)
     );
   }
 };
@@ -220,7 +203,7 @@ export const getPostById = async (
       commentCount: post.comments.length,  // Add comment count
     });
   } catch (err: any) {
-    return next(new HttpException(ErrorCode.GENERAL_EXCEPTION_100, 100, err.message));
+    return next(new HttpException(ErrorCode.GENERAL_EXCEPTION_500, 100, err.message));
   }
 };
 

@@ -70,7 +70,7 @@ export const createOrUpdateReaction = async (
       res.json(reaction);
     } catch (err: any) {
       return next(
-        new HttpException(ErrorCode.GENERAL_EXCEPTION_100, 100, err.message)
+        new HttpException(ErrorCode.GENERAL_EXCEPTION_500, 100, err.message)
       );
     }
   };
@@ -109,7 +109,7 @@ export const createOrUpdateReaction = async (
       res.json(deletedReaction);
     } catch (err: any) {
       return next(
-        new HttpException(ErrorCode.GENERAL_EXCEPTION_100, 100, err.message)
+        new HttpException(ErrorCode.GENERAL_EXCEPTION_500, 100, err.message)
       );
     }
   };
@@ -142,7 +142,7 @@ export const createOrUpdateReaction = async (
       res.json(reactions);
     } catch (err: any) {
       return next(
-        new HttpException(ErrorCode.GENERAL_EXCEPTION_100, 100, err.message)
+        new HttpException(ErrorCode.GENERAL_EXCEPTION_500, 100, err.message)
       );
     }
   };

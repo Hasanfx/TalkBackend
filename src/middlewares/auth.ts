@@ -34,7 +34,7 @@ export const AuthMiddleware = async (
     if (err instanceof HttpException) exception = err;
     else
       exception = new HttpException(
-        ErrorCode.GENERAL_EXCEPTION_100,
+        ErrorCode.GENERAL_EXCEPTION_500,
         100,
         err.errors
       );

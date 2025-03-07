@@ -5,45 +5,51 @@ import { ErrorCode, HttpException } from "../exception/root";
 import { ZodError } from "zod";
 import bcrypt from "bcryptjs";
 import { generateAccessToken, generateRefreshToken } from "../utils/tokenUtils";
+import multer from "multer";
+import { handleImageUpload } from "../services/uploadImg";
 
-export const register = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+
+
+export const register = async (req: any, res: Response, next: NextFunction) => {
   try {
-    UserSchema.parse(req.body); // Validate user input
-    console.log("User input validated:", req.body);
-  } catch (err) {
-    if (err instanceof ZodError) {
-      console.error("Validation failed:", err.errors);
-      return next(
-        new HttpException(ErrorCode.INVALID_DATA_400, 400, err.errors)
-      );
+    // Validate user input
+    try {
+      UserSchema.parse(req.body);
+      console.log("User input validated:", req.body);
+    } catch (err: any) {
+      if (err instanceof ZodError) {
+        console.error("Validation failed:", err.errors);
+        return next(new HttpException(ErrorCode.INVALID_DATA_400, 400, err.errors));
+      }
+      return next(new HttpException(ErrorCode.GENERAL_EXCEPTION_500, 500, err.message));
     }
+
+    const { name, email, password } = req.body;
+    const existingUser = await prismaClient.user.findFirst({ where: { email } });
+    if (existingUser) {
+      console.log("User already exists with email:", email);
+      return next(new HttpException(ErrorCode.ALREADY_EXIST_403, 403));
+    }
+
+    // Handle profile image upload via service
+    const profileImg = await handleImageUpload(req, "profile");
+
+    const newUser = await prismaClient.user.create({
+      data: {
+        name,
+        email,
+        password: await bcrypt.hash(password, 10),
+        profileImg,
+      },
+    });
+
+    console.log("User created:", newUser);
+    res.json(newUser);
+  } catch (err: any) {
+    return next(new HttpException(ErrorCode.GENERAL_EXCEPTION_500, 500, err.message));
   }
-
-  const { name, email,password } = req.body;
-  console.log("Registering user with email:", email);
-
-  const user = await prismaClient.user.findFirst({ where: { email } });
-
-  if (user) {
-    console.log("User already exists with email:", email);
-    return next(new HttpException(ErrorCode.ALREADY_EXIST_403, 403));
-  }
-
-  const newUser = await prismaClient.user.create({
-    data: {
-      name,
-      email,
-      password: await bcrypt.hash(password, 10),
-    },
-  });
-
-  console.log("User created:", newUser);
-  res.json(newUser);
 };
+
 
 export const login = async (
   req: Request,

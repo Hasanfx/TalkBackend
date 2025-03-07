@@ -50,7 +50,7 @@ export const UpdateUser = async (
     res.json(updatedUser);
   } catch (err: any) {
     return next(
-      new HttpException(ErrorCode.GENERAL_EXCEPTION_100, 404, err.message)
+      new HttpException(ErrorCode.GENERAL_EXCEPTION_500, 404, err.message)
     );
   }
 };

@@ -6,6 +6,7 @@ import { refreshToken } from "../controllers/TokenController";
 import postRoutes from "./postRoutes";
 import commentRoutes from "./commentRoutes";
 import reactionRoutes from "./reactionRoutes";
+import imgRoutes from "./imgRoutes";
 
 const rootRouter = Router();
 
@@ -14,6 +15,7 @@ rootRouter.use("/user", userRoutes);
 rootRouter.use("/post",postRoutes);
 rootRouter.use("/comment",commentRoutes);
 rootRouter.use("/reaction",reactionRoutes);
+rootRouter.use("/image",imgRoutes)
 
 rootRouter.post("/refresh", ErrorHandler(refreshToken));
 

@@ -4,12 +4,13 @@ import { HttpException, ErrorCode } from "../exception/root";
 
 export const getImg = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // Get type and id from query parameters
-    const type = req.query.type as string; // expecting "profile" or "post"
-    const id = Number(req.query.id);
+    // Get type and id from URL parameters (not query parameters)
+    const type = req.params.type; // expecting "profile" or "post"
+    const id = Number(req.params.id);
 
     if (!type || isNaN(id)) {
-      return res.status(400).json({ error: "Missing or invalid 'type' or 'id' parameter." });
+      res.status(400).json({ error: "Missing or invalid 'type' or 'id' parameter." });
+      return;
     }
 
     let imgPath: string | null = null;
@@ -20,7 +21,8 @@ export const getImg = async (req: Request, res: Response, next: NextFunction) =>
         select: { profileImg: true },
       });
       if (!user || !user.profileImg) {
-        return res.status(404).json({ error: "Profile image not found!" });
+        res.status(404).json({ error: "Profile image not found!" });
+        return;
       }
       imgPath = user.profileImg;
     } else if (type === "post") {
@@ -29,11 +31,13 @@ export const getImg = async (req: Request, res: Response, next: NextFunction) =>
         select: { postImg: true },
       });
       if (!post || !post.postImg) {
-        return res.status(404).json({ error: "Post image not found!" });
+        res.status(404).json({ error: "Post image not found!" });
+        return;
       }
       imgPath = post.postImg;
     } else {
-      return res.status(400).json({ error: "Invalid type. Must be 'profile' or 'post'." });
+      res.status(400).json({ error: "Invalid type. Must be 'profile' or 'post'." });
+      return;
     }
 
     // Return the image path as JSON
