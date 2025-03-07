@@ -13,7 +13,7 @@ import dotenv from "dotenv";
 // import { errorMiddleware } from "./src/middlewares/errors";
 dotenv.config();
 
-const app: Express = express();
+export const app: Express = express();
 const port = process.env.PORT || 4000;
 
 app.use(express.json());
