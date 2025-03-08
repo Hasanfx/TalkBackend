@@ -17,7 +17,7 @@ export const app: Express = express();
 const port = process.env.PORT || 4000;
 
 app.use(express.json());
-app.use(cors({ origin: process.env.FRONTEND_PATH, credentials: true }));
+app.use(cors({ origin: '*' }));
 app.use(cookieParser());
 
 app.use(morgan("dev"));
@@ -34,5 +34,6 @@ app.use(errorMiddleware);
 
 if (process.env.NODE_ENV !== 'test') {
   app.listen(port, () => {
+    console.log(`app is running on ${port}`)
   });
 }
