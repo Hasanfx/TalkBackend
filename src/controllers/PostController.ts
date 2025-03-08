@@ -1,44 +1,70 @@
 import express, { Request, Response, NextFunction } from "express";
+import multer from "multer";
 import { prismaClient } from "../../server";
 import { ZodError } from "zod";
 import { ErrorCode, HttpException } from "../exception/root";
 import { PostSchema } from "../schema/post";
-import multer from "multer";
-import path from "path";
-import fs from "fs/promises";
-import { existsSync } from "fs";
 import { handleImageUpload } from "../services/uploadImg";
 
 const storage = multer.memoryStorage();
-const upload =multer({storage})
+const upload = multer({ storage });
 
-export const createPost = async (req: any, res: Response, next: NextFunction) => {
+export const createPost = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const filePath = await handleImageUpload(req, "posts");
+    console.log("🟢 Received body:", req.body);
+    console.log("🟢 Received file:", req.file);
 
+    // ✅ Ensure request body isn't empty
+    if (!req.body || Object.keys(req.body).length === 0) {
+      return next(new HttpException(ErrorCode.INVALID_DATA_400, 400, "Request body is empty"));
+    }
+
+    // ✅ Process file upload
+    const filePath = req.file ? await handleImageUpload(req, "posts") : null;
+
+    // ✅ Convert `user` to number
+    const userId = Number(req.body.user);
+    if (!userId || isNaN(userId)) {
+      return next(new HttpException(ErrorCode.INVALID_DATA_400, 400, "Invalid user ID"));
+    }
+
+    // ✅ Validate content
+    const content = req.body.content?.trim();
+    if (!content) {
+      return next(new HttpException(ErrorCode.INVALID_DATA_400, 400, "Content is required"));
+    }
+
+    // ✅ Validate with Zod
     try {
-      PostSchema.parse(req.body);
+      PostSchema.parse({ content });
     } catch (err: any) {
       if (err instanceof ZodError) {
         return next(new HttpException(ErrorCode.INVALID_DATA_400, 400, err.errors));
       }
-      return next(new HttpException(ErrorCode.GENERAL_EXCEPTION_500, 100, err.message));
+      return next(new HttpException(ErrorCode.GENERAL_EXCEPTION_500, 500, err.message));
     }
 
+    // ✅ Create new post
     const newPost = await prismaClient.post.create({
       data: {
-        content: req.body.content,
+        content,
         postImg: filePath,
-        author: { connect: { id: Number(req.user.id) } },
-      }
+        author: { connect: { id: userId } },
+      },
     });
 
-    res.json(newPost);
+    res.status(201).json(newPost);
   } catch (err: any) {
-    console.error("Error occurred:", err);
-    return next(new HttpException(ErrorCode.GENERAL_EXCEPTION_500, 100, err.message));
+    console.error("🔴 Error occurred:", err);
+    return next(new HttpException(ErrorCode.GENERAL_EXCEPTION_500, 500, err.message));
   }
 };
+
+
+// ✅ Apply multer middleware for handling form-data uploads
+export const postRouter = express.Router();
+postRouter.post("/add", upload.single("image"), createPost);
+
 
 
 
