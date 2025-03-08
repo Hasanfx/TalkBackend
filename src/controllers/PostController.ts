@@ -11,8 +11,6 @@ const upload = multer({ storage });
 
 export const createPost = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    console.log("🟢 Received body:", req.body);
-    console.log("🟢 Received file:", req.file);
 
     // ✅ Ensure request body isn't empty
     if (!req.body || Object.keys(req.body).length === 0) {
@@ -190,14 +188,14 @@ export const getPostById = async (
         author: {
           select: {
             id: true,
-            name: true, // Assuming your user model has a 'name' field
-            profileImg: true, // Include profileImg if necessary
+            name: true, 
+            profileImg: true, 
           },
         },
         reactions: {
           select: {
             type: true,
-            userId: true, // Include userId for reactions if needed
+            userId: true, 
           },
         },
         comments: {
