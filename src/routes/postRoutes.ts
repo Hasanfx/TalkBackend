@@ -9,7 +9,7 @@ import {
   getPostById
 } from "../controllers/PostController"; 
 import { PostOwner } from "../middlewares/ownerPost"; 
-import {FileMiddleware } from "../middlewares/mutler.config";
+import {FileMiddleware, upload } from "../middlewares/mutler.config";
 
 const postRoutes = Router({ mergeParams: true }); // Renamed for consistency
 
@@ -29,7 +29,7 @@ postRoutes.get(
 // Route to create a new post
 postRoutes.post(
   "/add", 
-  [AuthMiddleware],FileMiddleware,
+  [AuthMiddleware],upload.single("image"),
   ErrorHandler(createPost)
 );
 
