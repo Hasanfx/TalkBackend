@@ -20,7 +20,6 @@ export const PostOwner = async (
       return next(new HttpException(ErrorCode.NOT_FOUND_404, 404, "Post not found"));
     }
 
-    console.log("Post Owner ID:", post.authorId, "Current User ID:", (req as any).user.id);
 
     // Check if the current user is the post author
     if (post.authorId === (req as any).user.id) {

@@ -34,6 +34,5 @@ app.use(errorMiddleware);
 
 if (process.env.NODE_ENV !== 'test') {
   app.listen(port, () => {
-    console.log("app listen to port " + port);
   });
 }

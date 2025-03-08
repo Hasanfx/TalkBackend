@@ -14,6 +14,9 @@ jest.mock('../../../server', () => ({
       findFirst: jest.fn(),
       delete: jest.fn(),
       findUnique: jest.fn(),
+    },
+    post: {
+      findFirst: jest.fn()
     }
   }
 }));
@@ -67,6 +70,10 @@ describe('CommentController', () => {
           content: mockReq.body.content,
           post: { connect: { id: 1 } },
           user: { connect: { id: Number(mockReq.user.id) } }
+        },
+        include: {
+          user: true,
+          post: true
         }
       });
       expect(mockRes.json).toHaveBeenCalledWith(mockComment);
