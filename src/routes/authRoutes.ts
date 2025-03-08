@@ -7,7 +7,7 @@ import { FileMiddleware } from "../middlewares/mutler.config";
 
 const authRoutes = Router();
 
-authRoutes.post("/signup",FileMiddleware,ErrorHandler(register));
+authRoutes.post("/signup", FileMiddleware, ErrorHandler(register));
 authRoutes.post("/login", ErrorHandler(login));
 authRoutes.get("/me", [AuthMiddleware], ErrorHandler(me));
 authRoutes.get("/logout", [AuthMiddleware], ErrorHandler(logout));

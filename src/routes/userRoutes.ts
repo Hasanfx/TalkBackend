@@ -17,7 +17,7 @@ userRoutes.get(
 );
 userRoutes.get(
   "/:userId",
-  [AuthMiddleware, AdminMiddleware],
+  [AuthMiddleware],
   ErrorHandler(GetUserById)
 );
 

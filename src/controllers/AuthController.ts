@@ -10,45 +10,61 @@ import { handleImageUpload } from "../services/uploadImg";
 
 
 
-export const register = async (req: any, res: Response, next: NextFunction) => {
+export const register = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // Validate user input
-    try {
-      UserSchema.parse(req.body);
-      console.log("User input validated:", req.body);
-    } catch (err: any) {
-      if (err instanceof ZodError) {
-        console.error("Validation failed:", err.errors);
-        return next(new HttpException(ErrorCode.INVALID_DATA_400, 400, err.errors));
-      }
-      return next(new HttpException(ErrorCode.GENERAL_EXCEPTION_500, 500, err.message));
+    console.log("🟢 Received form-data:", req.body);
+
+    // 1️⃣ Extract form fields
+    const { name, email, password } = req.body;
+    console.log(req.body)
+    if (!name || !email || !password) {
+      console.error("🔴 Missing required fields");
+      return next(new HttpException(ErrorCode.INVALID_DATA_400, 400, "All fields are required"));
     }
 
-    const { name, email, password } = req.body;
+    // 2️⃣ Check if user already exists
     const existingUser = await prismaClient.user.findFirst({ where: { email } });
     if (existingUser) {
-      console.log("User already exists with email:", email);
-      return next(new HttpException(ErrorCode.ALREADY_EXIST_403, 403));
+      console.warn("⚠️ User already exists:", email);
+      return next(new HttpException(ErrorCode.ALREADY_EXIST_403, 403, "User already exists"));
     }
 
-    // Handle profile image upload via service
-    const profileImg = await handleImageUpload(req, "profile");
+    // 3️⃣ Handle file upload (if available)
+    let profileImg = null;
+    if (req.file) {
+      try {
+        profileImg = await handleImageUpload(req, "profile");
+        console.log("✅ Profile image uploaded:", profileImg);
+      } catch (error) {
+        console.error("❌ Error uploading profile image:", error);
+        return next(new HttpException(ErrorCode.GENERAL_EXCEPTION_500, 500, "Failed to upload profile image"));
+      }
+    }
 
+    // 4️⃣ Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // 5️⃣ Create new user
     const newUser = await prismaClient.user.create({
       data: {
         name,
         email,
-        password: await bcrypt.hash(password, 10),
+        password: hashedPassword,
         profileImg,
       },
     });
 
-    console.log("User created:", newUser);
-    res.json(newUser);
+    console.log("✅ User created successfully:", newUser);
+    return res.status(201).json(newUser);
   } catch (err: any) {
+    console.error("🔴 Error in register function:", err);
     return next(new HttpException(ErrorCode.GENERAL_EXCEPTION_500, 500, err.message));
   }
 };
+
+
+// Define route
+
 
 
 export const login = async (
