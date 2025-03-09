@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { createComment, deleteComment } from '../../controllers/CommentController';
+import { createComment, deleteComment } from '../../controllers/commentController';
 import { prismaClient } from '../../../server';
 import { HttpException, ErrorCode } from '../../exception/root';
 import { CommentSchema } from '../../schema/comment';

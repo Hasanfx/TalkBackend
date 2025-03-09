@@ -5,7 +5,7 @@ import {
   createOrUpdateReaction,
   deleteReaction,
   getReactions
-} from "../controllers/ReactionController"; // Updated controller names
+} from "../controllers/reactionController"; // Updated controller names
 
 const reactionRoutes = Router({ mergeParams: true }); // Renamed for consistency
 
