@@ -15,13 +15,14 @@ export const handleImageUpload = async (req: any, folder: string): Promise<strin
 
   // Use placeholder if no file uploaded
   if (!req.file) {
-    return `/uploads/${folder}/placeHolder.webp`;
+    return  path.join(process.cwd(), `uploads/${folder}/placeHolder`)
+    
   }
 
   // Generate unique filename
   const fileType = req.file.originalname.split('.').pop();
   const fileName = `${folder}-${Date.now()}.${fileType}`;
-  const filePath = `/uploads/${folder}/${fileName}`;
+  const filePath = path.join(process.cwd(), `uploads/${folder}/${fileName}`);
 
   // Save file to disk
   await fs.writeFile(
