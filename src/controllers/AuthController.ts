@@ -12,7 +12,6 @@ import { handleImageUpload } from "../services/uploadImg";
 
 export const register = async (req: Request, res: Response, next: NextFunction) => {
   try {
-<<<<<<< HEAD
     console.log("🟢 Received form-data:", req.body);
 
     // 1️⃣ Extract form fields
@@ -21,28 +20,13 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
     if (!name || !email || !password) {
       console.error("🔴 Missing required fields");
       return next(new HttpException(ErrorCode.INVALID_DATA_400, 400, "All fields are required"));
-=======
-    // Validate user input
-    try {
-      UserSchema.parse(req.body);
-    } catch (err: any) {
-      if (err instanceof ZodError) {
-        console.error("Validation failed:", err.errors);
-        return next(new HttpException(ErrorCode.INVALID_DATA_400, 400, err.errors));
-      }
-      return next(new HttpException(ErrorCode.GENERAL_EXCEPTION_500, 500, err.message));
->>>>>>> 438669a22b768563e01e3b906036cb9b07e51f66
     }
 
     // 2️⃣ Check if user already exists
     const existingUser = await prismaClient.user.findFirst({ where: { email } });
     if (existingUser) {
-<<<<<<< HEAD
       console.warn("⚠️ User already exists:", email);
       return next(new HttpException(ErrorCode.ALREADY_EXIST_403, 403, "User already exists"));
-=======
-      return next(new HttpException(ErrorCode.ALREADY_EXIST_403, 403));
->>>>>>> 438669a22b768563e01e3b906036cb9b07e51f66
     }
 
     // 3️⃣ Handle file upload (if available)
@@ -70,12 +54,8 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
       },
     });
 
-<<<<<<< HEAD
     console.log("✅ User created successfully:", newUser);
     return res.status(201).json(newUser);
-=======
-    res.json(newUser);
->>>>>>> 438669a22b768563e01e3b906036cb9b07e51f66
   } catch (err: any) {
     console.error("🔴 Error in register function:", err);
     return next(new HttpException(ErrorCode.GENERAL_EXCEPTION_500, 500, err.message));
