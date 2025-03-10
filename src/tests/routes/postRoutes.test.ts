@@ -2,9 +2,6 @@ import request from "supertest";
 import express from "express";
 import { prismaClient } from "../../../server";
 import postRoutes from "../../routes/postRoutes";
-import { AuthMiddleware } from "../../middlewares/auth";
-import { PostOwner } from "../../middlewares/ownerPost";
-import { handleImageUpload } from "../../services/uploadImg";
 import { PostSchema } from "../../schema/post";
 import path from "path";
 
@@ -59,14 +56,12 @@ describe("Post Routes", () => {
         {
           id: 1,
           content: "Test post 1",
-          postImg: "/uploads/posts/test1.jpg",
           author: { name: "User 1", profileImg: "/uploads/profile/user1.jpg" },
           comments: [],
         },
         {
           id: 2,
           content: "Test post 2",
-          postImg: "/uploads/posts/test2.jpg",
           author: { name: "User 2", profileImg: "/uploads/profile/user2.jpg" },
           comments: [],
         },
@@ -87,11 +82,9 @@ describe("Post Routes", () => {
       const mockPost = {
         id: 1,
         content: "Test post",
-        postImg: "/uploads/posts/test.jpg",
         author: {
           id: 1,
           name: "User 1",
-          profileImg: "/uploads/profile/user1.jpg",
         },
         comments: [],
         commentCount: 0,
@@ -123,31 +116,22 @@ describe("Post Routes", () => {
       const mockPost = {
         id: 1,
         content: "New post",
-        postImg: "/uploads/posts/new-post.jpg",
         authorId: 1,
       };
 
-      (handleImageUpload as jest.Mock).mockResolvedValue(
-        "/uploads/posts/new-post.jpg"
-      );
       (PostSchema.parse as jest.Mock).mockReturnValue(true);
       (prismaClient.post.create as jest.Mock).mockResolvedValue(mockPost);
 
       const response = await request(app)
         .post("/posts/add")
         .field("content", "New post")
-        .field("user", "1")
-        .attach(
-          "image",
-          path.join(__dirname, "../../tests/fixtures/test-profile.jpg")
-        );
+        .field("user", "1");
 
       expect(response.status).toBe(201);
       expect(response.body).toEqual(mockPost);
       expect(prismaClient.post.create).toHaveBeenCalledWith({
         data: {
           content: "New post",
-          postImg: "/uploads/posts/new-post.jpg",
           author: { connect: { id: 1 } },
         },
       });
@@ -158,13 +142,7 @@ describe("Post Routes", () => {
         throw new Error("Validation error");
       });
 
-      const response = await request(app)
-        .post("/posts/add")
-        .field("user", "1")
-        .attach(
-          "image",
-          path.join(__dirname, "../../tests/fixtures/test-profile.jpg")
-        );
+      const response = await request(app).post("/posts/add").field("user", "1");
 
       expect(response.status).toBe(400);
     });
@@ -175,26 +153,18 @@ describe("Post Routes", () => {
       const mockPost = {
         id: 1,
         content: "Updated post",
-        postImg: "/uploads/posts/updated-post.jpg",
       };
 
       (prismaClient.post.findFirst as jest.Mock).mockResolvedValue({
         id: 1,
         content: "Original post",
       });
-      (handleImageUpload as jest.Mock).mockResolvedValue(
-        "/uploads/posts/updated-post.jpg"
-      );
       (PostSchema.parse as jest.Mock).mockReturnValue(true);
       (prismaClient.post.update as jest.Mock).mockResolvedValue(mockPost);
 
       const response = await request(app)
         .put("/posts/1")
-        .field("content", "Updated post")
-        .attach(
-          "file",
-          path.join(__dirname, "../../tests/fixtures/test-profile.jpg")
-        );
+        .field("content", "Updated post");
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(mockPost);
@@ -202,7 +172,6 @@ describe("Post Routes", () => {
         where: { id: 1 },
         data: {
           content: "Updated post",
-          postImg: "/uploads/posts/updated-post.jpg",
         },
       });
     });
@@ -212,11 +181,7 @@ describe("Post Routes", () => {
 
       const response = await request(app)
         .put("/posts/999")
-        .field("content", "Updated post")
-        .attach(
-          "file",
-          path.join(__dirname, "../../tests/fixtures/test-profile.jpg")
-        );
+        .field("content", "Updated post");
 
       expect(response.status).toBe(404);
     });
