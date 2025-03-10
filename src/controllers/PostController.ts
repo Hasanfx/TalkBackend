@@ -1,35 +1,44 @@
-import express, { Request, Response, NextFunction } from "express";
-import multer from "multer";
+import { Request, Response, NextFunction } from "express";
 import { prismaClient } from "../../server";
 import { ZodError } from "zod";
 import { ErrorCode, HttpException } from "../exception/root";
 import { PostSchema } from "../schema/post";
-import { handleImageUpload } from "../services/uploadImg";
 
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
-
-export const createPost = async (req: Request, res: Response, next: NextFunction) => {
+export const createPost = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
-
     // ✅ Ensure request body isn't empty
     if (!req.body || Object.keys(req.body).length === 0) {
-      return next(new HttpException(ErrorCode.INVALID_DATA_400, 400, "Request body is empty"));
+      return next(
+        new HttpException(
+          ErrorCode.INVALID_DATA_400,
+          400,
+          "Request body is empty"
+        )
+      );
     }
-
-    // ✅ Process file upload
-    const filePath = req.file ? await handleImageUpload(req, "posts") : null;
 
     // ✅ Convert `user` to number
     const userId = Number(req.body.user);
     if (!userId || isNaN(userId)) {
-      return next(new HttpException(ErrorCode.INVALID_DATA_400, 400, "Invalid user ID"));
+      return next(
+        new HttpException(ErrorCode.INVALID_DATA_400, 400, "Invalid user ID")
+      );
     }
 
     // ✅ Validate content
     const content = req.body.content?.trim();
     if (!content) {
-      return next(new HttpException(ErrorCode.INVALID_DATA_400, 400, "Content is required"));
+      return next(
+        new HttpException(
+          ErrorCode.INVALID_DATA_400,
+          400,
+          "Content is required"
+        )
+      );
     }
 
     // ✅ Validate with Zod
@@ -37,43 +46,47 @@ export const createPost = async (req: Request, res: Response, next: NextFunction
       PostSchema.parse({ content });
     } catch (err: any) {
       if (err instanceof ZodError) {
-        return next(new HttpException(ErrorCode.INVALID_DATA_400, 400, err.errors));
+        return next(
+          new HttpException(ErrorCode.INVALID_DATA_400, 400, err.errors)
+        );
       }
-      return next(new HttpException(ErrorCode.GENERAL_EXCEPTION_500, 500, err.message));
+      return next(
+        new HttpException(ErrorCode.GENERAL_EXCEPTION_500, 500, err.message)
+      );
     }
 
     // ✅ Create new post
     const newPost = await prismaClient.post.create({
       data: {
         content,
-        postImg: filePath,
         author: { connect: { id: userId } },
       },
     });
 
     res.status(201).json(newPost);
   } catch (err: any) {
-    console.error("🔴 Error occurred:", err);
-    return next(new HttpException(ErrorCode.GENERAL_EXCEPTION_500, 500, err.message));
+    return next(
+      new HttpException(ErrorCode.GENERAL_EXCEPTION_500, 500, err.message)
+    );
   }
 };
 
-
-// ✅ Apply multer middleware for handling form-data uploads
-export const postRouter = express.Router();
-postRouter.post("/add", upload.single("image"), createPost);
-
-
-
-
-export const updatePost = async (req: any, res: Response, next: NextFunction) => {
+export const updatePost = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     PostSchema.parse(req.body);
   } catch (err: any) {
     if (err instanceof ZodError) {
-      return next(new HttpException(ErrorCode.INVALID_DATA_400, 400, err.errors));
+      return next(
+        new HttpException(ErrorCode.INVALID_DATA_400, 400, err.errors)
+      );
     }
-    return next(new HttpException(ErrorCode.GENERAL_EXCEPTION_500, 100, err.message));
+    return next(
+      new HttpException(ErrorCode.GENERAL_EXCEPTION_500, 100, err.message)
+    );
   }
 
   try {
@@ -83,19 +96,18 @@ export const updatePost = async (req: any, res: Response, next: NextFunction) =>
 
     if (!post) return next(new HttpException(ErrorCode.NOT_FOUND_404, 404));
 
-    const filePath = req.file ? await handleImageUpload(req, "posts") : post.postImg;
-
     const updatedPost = await prismaClient.post.update({
       where: { id: post.id },
       data: {
         content: req.body.content,
-        postImg: filePath,
       },
     });
 
     res.json(updatedPost);
   } catch (err: any) {
-    return next(new HttpException(ErrorCode.GENERAL_EXCEPTION_500, 404, err.message));
+    return next(
+      new HttpException(ErrorCode.GENERAL_EXCEPTION_500, 404, err.message)
+    );
   }
 };
 
@@ -108,10 +120,9 @@ export const deletePost = async (
     const message = await prismaClient.post.findFirst({
       where: { id: Number(req.params.id) },
     });
-    
+
     if (!message) return next(new HttpException(ErrorCode.NOT_FOUND_404, 404));
-  
-    
+
     const deletedMessage = await prismaClient.post.delete({
       where: { id: message.id },
     });
@@ -131,13 +142,6 @@ export const getAllPosts = async (
         author: {
           select: {
             name: true, // Assuming your user model has a 'name' field
-            profileImg: true, // Include profileImg if necessary
-          },
-        },
-        reactions: {
-          select: {
-            type: true,
-            userId: true, // Include userId for reactions if needed
           },
         },
         comments: {
@@ -150,7 +154,6 @@ export const getAllPosts = async (
             user: {
               select: {
                 name: true, // Get user details for the comment author
-                profileImg: true, // Include profileImg for the comment author
               },
             },
           },
@@ -162,10 +165,8 @@ export const getAllPosts = async (
       },
     });
 
-    // Map posts to include reaction count
     const formattedPosts = posts.map((post) => ({
       ...post,
-      reactionCount: post.reactions.length,
     }));
 
     res.json(formattedPosts);
@@ -188,16 +189,10 @@ export const getPostById = async (
         author: {
           select: {
             id: true,
-            name: true, 
-            profileImg: true, 
+            name: true,
           },
         },
-        reactions: {
-          select: {
-            type: true,
-            userId: true, 
-          },
-        },
+
         comments: {
           select: {
             id: true,
@@ -209,7 +204,6 @@ export const getPostById = async (
               select: {
                 id: true,
                 name: true, // Get user details for the comment author
-                profileImg: true, // Include profileImg for the comment author
               },
             },
           },
@@ -219,15 +213,17 @@ export const getPostById = async (
     });
 
     if (!post)
-      return next(new HttpException(ErrorCode.NOT_FOUND_404, 404, "Post not found"));
+      return next(
+        new HttpException(ErrorCode.NOT_FOUND_404, 404, "Post not found")
+      );
 
     res.json({
       ...post,
-      reactionCount: post.reactions.length, // Add reaction count
-      commentCount: post.comments.length,  // Add comment count
+      commentCount: post.comments.length, // Add comment count
     });
   } catch (err: any) {
-    return next(new HttpException(ErrorCode.GENERAL_EXCEPTION_500, 100, err.message));
+    return next(
+      new HttpException(ErrorCode.GENERAL_EXCEPTION_500, 100, err.message)
+    );
   }
 };
-
