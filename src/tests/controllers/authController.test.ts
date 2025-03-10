@@ -8,7 +8,7 @@ import {
   me 
 } from '../../controllers/AuthController';
 import { generateAccessToken } from '../../utils/tokenUtils';
-import { HttpException, ErrorCode } from '../../exception/root';
+import { HttpException } from '../../exception/root';
 
 const mockNext = jest.fn();
 

@@ -1,7 +1,7 @@
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction } from 'express';
 import { createComment, deleteComment } from '../../controllers/commentController';
 import { prismaClient } from '../../../server';
-import { HttpException, ErrorCode } from '../../exception/root';
+import { HttpException } from '../../exception/root';
 import { CommentSchema } from '../../schema/comment';
 import { ErrorHandler } from '../../schema/errorHandler';
 import { ZodError } from 'zod'; // Importing ZodError
