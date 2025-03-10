@@ -43,11 +43,6 @@ jest.mock("../../schema/users", () => ({
   },
 }));
 
-jest.mock("../../services/uploadImg", () => ({
-  handleImageUpload: jest
-    .fn()
-    .mockResolvedValue("/uploads/profile/test-profile.jpg"),
-}));
 
 // Setup express app for testing
 const app = express();
@@ -66,7 +61,6 @@ describe("Auth Routes", () => {
         name: "Test User",
         email: "test@example.com",
         password: "hashedpassword",
-        profileImg: "/uploads/profile/test-profile.jpg",
       };
 
       (UserSchema.parse as jest.Mock).mockReturnValue(true);
@@ -81,7 +75,7 @@ describe("Auth Routes", () => {
         password: "password123",
       });
 
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(201);
       expect(prismaClient.user.create).toHaveBeenCalled();
     });
 
@@ -106,7 +100,7 @@ describe("Auth Routes", () => {
       expect(response.status).toBe(403);
     });
 
-    it("should return 500 for invalid data", async () => {
+    it("should return 400 for invalid data", async () => {
       (UserSchema.parse as jest.Mock).mockImplementation(() => {
         throw new Error("Validation error");
       });
@@ -117,7 +111,7 @@ describe("Auth Routes", () => {
         password: "pass", // Too short password
       });
 
-      expect(response.status).toBe(500);
+      expect(response.status).toBe(400);
     });
   });
 

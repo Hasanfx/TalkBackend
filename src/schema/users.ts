@@ -8,5 +8,4 @@ export const UserSchema = z.object({
   email: z.string().email(),
   role: z.enum(["ADMIN", "USER"]).default("USER"),
   password: z.string().min(6),
-  profileImg: z.string().regex(imageRegex, "Invalid image file type").optional(),
 });

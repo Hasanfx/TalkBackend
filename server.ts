@@ -22,7 +22,6 @@ app.use(cookieParser());
 app.use(morgan("dev"));
 
 app.use("/api", rootRouter);
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 export const prismaClient = new PrismaClient({
   log: ["query"],

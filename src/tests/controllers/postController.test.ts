@@ -26,9 +26,6 @@ jest.mock("../../../server", () => ({
   },
 }));
 
-jest.mock("../../services/uploadImg", () => ({
-  handleImageUpload: jest.fn(),
-}));
 
 jest.mock("../../schema/post", () => ({
   PostSchema: {

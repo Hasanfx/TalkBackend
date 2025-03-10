@@ -22,7 +22,8 @@ export const createPost = async (
     }
 
     // ✅ Convert `user` to number
-    const userId = Number(req.body.user);
+    const userId = (req as any).user.id;
+    console.log(userId)
     if (!userId || isNaN(userId)) {
       return next(
         new HttpException(ErrorCode.INVALID_DATA_400, 400, "Invalid user ID")

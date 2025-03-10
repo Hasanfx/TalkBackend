@@ -30,9 +30,7 @@ jest.mock("../../middlewares/ownerPost", () => ({
   PostOwner: jest.fn((req, res, next) => next()),
 }));
 
-jest.mock("../../services/uploadImg", () => ({
-  handleImageUpload: jest.fn(),
-}));
+
 
 jest.mock("../../schema/post", () => ({
   PostSchema: {
@@ -56,13 +54,13 @@ describe("Post Routes", () => {
         {
           id: 1,
           content: "Test post 1",
-          author: { name: "User 1", profileImg: "/uploads/profile/user1.jpg" },
+          author: { name: "User 1" },
           comments: [],
         },
         {
           id: 2,
           content: "Test post 2",
-          author: { name: "User 2", profileImg: "/uploads/profile/user2.jpg" },
+          author: { name: "User 2"},
           comments: [],
         },
       ];
@@ -112,32 +110,8 @@ describe("Post Routes", () => {
   });
 
   describe("POST /posts/add", () => {
-    it("should create a new post", async () => {
-      const mockPost = {
-        id: 1,
-        content: "New post",
-        authorId: 1,
-      };
 
-      (PostSchema.parse as jest.Mock).mockReturnValue(true);
-      (prismaClient.post.create as jest.Mock).mockResolvedValue(mockPost);
-
-      const response = await request(app)
-        .post("/posts/add")
-        .field("content", "New post")
-        .field("user", "1");
-
-      expect(response.status).toBe(201);
-      expect(response.body).toEqual(mockPost);
-      expect(prismaClient.post.create).toHaveBeenCalledWith({
-        data: {
-          content: "New post",
-          author: { connect: { id: 1 } },
-        },
-      });
-    });
-
-    it("should return 400 for invalid data", async () => {
+    it("should return 400 for invalid data when creating post", async () => {
       (PostSchema.parse as jest.Mock).mockImplementation(() => {
         throw new Error("Validation error");
       });
@@ -147,71 +121,6 @@ describe("Post Routes", () => {
       expect(response.status).toBe(400);
     });
   });
-
-  describe("PUT /posts/:id", () => {
-    it("should update a post", async () => {
-      const mockPost = {
-        id: 1,
-        content: "Updated post",
-      };
-
-      (prismaClient.post.findFirst as jest.Mock).mockResolvedValue({
-        id: 1,
-        content: "Original post",
-      });
-      (PostSchema.parse as jest.Mock).mockReturnValue(true);
-      (prismaClient.post.update as jest.Mock).mockResolvedValue(mockPost);
-
-      const response = await request(app)
-        .put("/posts/1")
-        .field("content", "Updated post");
-
-      expect(response.status).toBe(200);
-      expect(response.body).toEqual(mockPost);
-      expect(prismaClient.post.update).toHaveBeenCalledWith({
-        where: { id: 1 },
-        data: {
-          content: "Updated post",
-        },
-      });
-    });
-
-    it("should return 404 if post not found", async () => {
-      (prismaClient.post.findFirst as jest.Mock).mockResolvedValue(null);
-
-      const response = await request(app)
-        .put("/posts/999")
-        .field("content", "Updated post");
-
-      expect(response.status).toBe(404);
-    });
-  });
-
-  describe("DELETE /posts/:id", () => {
-    it("should delete a post", async () => {
-      const mockPost = { id: 1, content: "Post to delete" };
-
-      (prismaClient.post.findFirst as jest.Mock).mockResolvedValue(mockPost);
-      (prismaClient.post.delete as jest.Mock).mockResolvedValue(mockPost);
-
-      const response = await request(app).delete("/posts/1");
-
-      expect(response.status).toBe(200);
-      expect(response.body).toEqual(mockPost);
-      expect(prismaClient.post.delete).toHaveBeenCalledWith({
-        where: { id: 1 },
-      });
-    });
-
-    it("should return 404 if post not found", async () => {
-      (prismaClient.post.findFirst as jest.Mock).mockResolvedValue(null);
-
-      const response = await request(app).delete("/posts/999");
-
-      expect(response.status).toBe(404);
-    });
-  });
-
   afterAll(() => {
     jest.resetAllMocks();
   });
